@@ -115,7 +115,7 @@ const SORGULAR = {
       CONVERT(varchar(128), SERVERPROPERTY('MachineName'))    AS makine,
       CONVERT(varchar(128), SERVERPROPERTY('InstanceName'))   AS instance,
       CONVERT(varchar(128), SERVERPROPERTY('ProductVersion')) AS surum,
-      CONVERT(varchar(128), SERVERPROPERTY('Edition'))        AS edisyon,
+      CONVERT(varchar(128), SERVERPROPERTY('Edition'))        AS edition,
       CONVERT(varchar(64),  SERVERPROPERTY('ProductLevel'))   AS seviye,
       si.cpu_count                                            AS cpu,
       si.physical_memory_kb / 1024                            AS fiziksel_bellek_mb,

@@ -284,18 +284,22 @@ const SORGULAR = {
 
   konfig_denetimi: `
     SELECT name AS ayar, CONVERT(varchar(40), value_in_use) AS deger,
-      CASE name
-        WHEN 'max degree of parallelism' THEN 'CPU/is yukune gore ayarla; 0 = sinirsiz, OLTP icin riskli'
-        WHEN 'cost threshold for parallelism' THEN 'Oneri 25-50; varsayilan 5 cok dusuk'
-        WHEN 'max server memory (MB)' THEN 'OS icin RAM birak; 2147483647 = sinirsiz (kotu)'
-        WHEN 'optimize for ad hoc workloads' THEN '1 onerilir; plan cache sismesini azaltir'
-        WHEN 'backup compression default' THEN '1 onerilir; yedek hizli ve kucuk'
-        ELSE ''
-      END AS oneri
+      CASE
+        WHEN name='max degree of parallelism' AND CONVERT(int,value_in_use)=0
+          THEN 'DIKKAT: 0=sinirsiz; CPU/is yukune gore ayarla (OLTP riskli)'
+        WHEN name='cost threshold for parallelism' AND CONVERT(int,value_in_use)<25
+          THEN 'DIKKAT: cok dusuk; 25-50 onerilir'
+        WHEN name='max server memory (MB)' AND CONVERT(bigint,value_in_use)>=2147483647
+          THEN 'DIKKAT: sinirsiz; OS icin RAM birak'
+        WHEN name='optimize for ad hoc workloads' AND CONVERT(int,value_in_use)=0
+          THEN 'DIKKAT: 1 onerilir (plan cache sismesini azaltir)'
+        WHEN name='backup compression default' AND CONVERT(int,value_in_use)=0
+          THEN 'DIKKAT: 1 onerilir (yedek hizli/kucuk)'
+        ELSE 'uygun'
+      END AS durum
     FROM sys.configurations
     WHERE name IN ('max degree of parallelism','cost threshold for parallelism',
-      'max server memory (MB)','optimize for ad hoc workloads','backup compression default',
-      'remote admin connections');`,
+      'max server memory (MB)','optimize for ad hoc workloads','backup compression default');`,
 
   bellek_baskisi: `
     SELECT

@@ -1,0 +1,44 @@
+{
+  "name": "@caglarozenc/mssql-health-mcp",
+  "version": "1.0.0",
+  "description": "Salt-okunur SQL Server saglik/teshis MCP sunucusu. MCP istemciniz canli SQL Server'inizi DMV'lerle teshis etsin — read-only by design.",
+  "type": "module",
+  "bin": {
+    "mssql-health-mcp": "index.js"
+  },
+  "files": [
+    "index.js",
+    "setup-readonly-login.sql",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "start": "node index.js",
+    "inspect": "npx -y @modelcontextprotocol/inspector node index.js"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "sql-server",
+    "mssql",
+    "dba",
+    "diagnostics",
+    "health-check",
+    "read-only",
+    "dmv"
+  ],
+  "author": "Çağlar Özenç (https://caglarozenc.com)",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dmcteknoloji/mssql-health-mcp.git"
+  },
+  "homepage": "https://caglarozenc.com",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0",
+    "mssql": "^11.0.1"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

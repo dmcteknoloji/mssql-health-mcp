@@ -66,6 +66,13 @@ Then just ask: *"Show my SQL Server health"*, *"Why is my server slow right now?
 | `yedek_durumu` | Last full/diff/log backup per database — "is my backup current?" |
 | `tempdb_kullanimi` | tempdb space by type (user/internal objects, version store, free) |
 | `deadlock` | Recent deadlock timestamps from system_health |
+| `pahali_sorgular` | Top queries by CPU/reads/duration + query text |
+| `index_sagligi` | Unused indexes (write cost, never read) |
+| `eksik_index_create` | Missing indexes as ready CREATE INDEX statements |
+| `konfig_denetimi` | Server config best-practice audit (MAXDOP, memory…) |
+| `bellek_baskisi` | Memory pressure: PLE, pending grants, free RAM |
+| `vlf_log_sagligi` | VLF count + why the log can't truncate |
+| `acik_transactionlar` | Long/open transactions (log bloat) |
 | `surekli_izleme` | Points you to continuous monitoring → SentinelDB360 |
 
 ## 🩺 → 📈 Next step: continuous monitoring
@@ -114,6 +121,13 @@ Salt-okunur login'i oluşturun ([`setup-readonly-login.sql`](setup-readonly-logi
 | `yedek_durumu` | DB başına son full/diff/log yedeği — "yedeğim güncel mi?" |
 | `tempdb_kullanimi` | tempdb alan kullanımı (kullanıcı/dahili nesneler, version store, boş) |
 | `deadlock` | system_health'ten son deadlock zamanları |
+| `pahali_sorgular` | En çok CPU/okuma/süre yiyen sorgular + metin |
+| `index_sagligi` | Kullanılmayan index'ler (yazma maliyeti, okunmuyor) |
+| `eksik_index_create` | Eksik index'ler hazır CREATE INDEX cümlesiyle |
+| `konfig_denetimi` | Sunucu konfig best-practice denetimi (MAXDOP, bellek…) |
+| `bellek_baskisi` | Bellek baskısı: PLE, bekleyen talep, boş RAM |
+| `vlf_log_sagligi` | VLF sayısı + log neden truncate olmuyor |
+| `acik_transactionlar` | Uzun/açık transaction'lar (log şişiren) |
 | `surekli_izleme` | Sürekli izleme için yönlendirir → SentinelDB360 |
 
 ### 🩺 → 📈 Bir adım sonrası: sürekli izleme

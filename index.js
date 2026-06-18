@@ -234,6 +234,100 @@ const SORGULAR = {
     ) r
     CROSS APPLY r.td.nodes('RingBufferTarget/event[@name="xml_deadlock_report"]') AS q(x)
     ORDER BY deadlock_zamani DESC;`,
+
+  pahali_sorgular: `
+    SELECT TOP 20
+      CONVERT(decimal(18,1), qs.total_worker_time/1000.0/NULLIF(qs.execution_count,0)) AS ort_cpu_ms,
+      CONVERT(decimal(18,1), qs.total_elapsed_time/1000.0/NULLIF(qs.execution_count,0)) AS ort_sure_ms,
+      qs.total_logical_reads/NULLIF(qs.execution_count,0) AS ort_okuma,
+      qs.execution_count AS calisma,
+      CONVERT(decimal(18,1), qs.total_worker_time/1000.0) AS toplam_cpu_ms,
+      DB_NAME(st.dbid) AS veritabani,
+      SUBSTRING(st.text, (qs.statement_start_offset/2)+1,
+        ((CASE qs.statement_end_offset WHEN -1 THEN DATALENGTH(st.text)
+          ELSE qs.statement_end_offset END - qs.statement_start_offset)/2)+1) AS sorgu
+    FROM sys.dm_exec_query_stats qs
+    CROSS APPLY sys.dm_exec_sql_text(qs.sql_handle) st
+    ORDER BY qs.total_worker_time DESC;`,
+
+  index_sagligi: `
+    SELECT TOP 25
+      OBJECT_NAME(s.object_id) AS tablo,
+      i.name                   AS index_adi,
+      s.user_seeks + s.user_scans + s.user_lookups AS okuma,
+      s.user_updates           AS yazma,
+      s.last_user_update       AS son_yazma
+    FROM sys.dm_db_index_usage_stats s
+    JOIN sys.indexes i ON i.object_id = s.object_id AND i.index_id = s.index_id
+    WHERE s.database_id = DB_ID() AND i.type_desc = 'NONCLUSTERED' AND i.is_primary_key = 0
+      AND (s.user_seeks + s.user_scans + s.user_lookups) = 0 AND s.user_updates > 0
+    ORDER BY s.user_updates DESC;`,
+
+  eksik_index_create: `
+    SELECT TOP 15
+      DB_NAME(mid.database_id) AS veritabani,
+      CONVERT(decimal(18,1), migs.avg_total_user_cost * migs.avg_user_impact *
+        (migs.user_seeks + migs.user_scans)) AS etki,
+      'CREATE INDEX IX_' + OBJECT_NAME(mid.object_id, mid.database_id) + '_'
+        + CONVERT(varchar(20), mig.index_group_handle) + ' ON ' + mid.statement
+        + ' (' + ISNULL(mid.equality_columns, '')
+        + CASE WHEN mid.equality_columns IS NOT NULL AND mid.inequality_columns IS NOT NULL THEN ',' ELSE '' END
+        + ISNULL(mid.inequality_columns, '') + ')'
+        + ISNULL(' INCLUDE (' + mid.included_columns + ')', '') AS create_cumlesi
+    FROM sys.dm_db_missing_index_group_stats migs
+    JOIN sys.dm_db_missing_index_groups mig ON migs.group_handle = mig.index_group_handle
+    JOIN sys.dm_db_missing_index_details mid ON mig.index_handle = mid.index_handle
+    ORDER BY etki DESC;`,
+
+  konfig_denetimi: `
+    SELECT name AS ayar, CONVERT(varchar(40), value_in_use) AS deger,
+      CASE name
+        WHEN 'max degree of parallelism' THEN 'CPU/is yukune gore ayarla; 0 = sinirsiz, OLTP icin riskli'
+        WHEN 'cost threshold for parallelism' THEN 'Oneri 25-50; varsayilan 5 cok dusuk'
+        WHEN 'max server memory (MB)' THEN 'OS icin RAM birak; 2147483647 = sinirsiz (kotu)'
+        WHEN 'optimize for ad hoc workloads' THEN '1 onerilir; plan cache sismesini azaltir'
+        WHEN 'backup compression default' THEN '1 onerilir; yedek hizli ve kucuk'
+        ELSE ''
+      END AS oneri
+    FROM sys.configurations
+    WHERE name IN ('max degree of parallelism','cost threshold for parallelism',
+      'max server memory (MB)','optimize for ad hoc workloads','backup compression default',
+      'remote admin connections');`,
+
+  bellek_baskisi: `
+    SELECT
+      (SELECT cntr_value FROM sys.dm_os_performance_counters
+        WHERE counter_name = 'Page life expectancy' AND object_name LIKE '%Buffer Manager%') AS ple_saniye,
+      (SELECT cntr_value FROM sys.dm_os_performance_counters
+        WHERE counter_name = 'Memory Grants Pending' AND object_name LIKE '%Memory Manager%') AS bekleyen_bellek_talebi,
+      (SELECT CONVERT(decimal(18,1), total_physical_memory_kb/1048576.0) FROM sys.dm_os_sys_memory) AS toplam_ram_gb,
+      (SELECT CONVERT(decimal(18,1), available_physical_memory_kb/1048576.0) FROM sys.dm_os_sys_memory) AS bos_ram_gb,
+      (SELECT system_memory_state_desc FROM sys.dm_os_sys_memory) AS bellek_durumu;`,
+
+  vlf_log_sagligi: `
+    SELECT d.name AS veritabani,
+      (SELECT COUNT(*) FROM sys.dm_db_log_info(d.database_id)) AS vlf_sayisi,
+      d.log_reuse_wait_desc AS log_neden_buyuyor,
+      d.recovery_model_desc AS kurtarma_modeli
+    FROM sys.databases d
+    WHERE d.state_desc = 'ONLINE'
+    ORDER BY vlf_sayisi DESC;`,
+
+  acik_transactionlar: `
+    SELECT TOP 20
+      s.session_id           AS oturum,
+      s.login_name           AS login,
+      DB_NAME(dt.database_id) AS veritabani,
+      DATEDIFF(SECOND, dt.database_transaction_begin_time, GETDATE()) AS sure_sn,
+      CONVERT(decimal(18,1), dt.database_transaction_log_bytes_used/1048576.0) AS log_mb,
+      s.status               AS durum,
+      s.host_name            AS makine,
+      s.program_name         AS uygulama
+    FROM sys.dm_tran_database_transactions dt
+    JOIN sys.dm_tran_session_transactions stx ON stx.transaction_id = dt.transaction_id
+    JOIN sys.dm_exec_sessions s ON s.session_id = stx.session_id
+    WHERE dt.database_transaction_begin_time IS NOT NULL
+    ORDER BY dt.database_transaction_begin_time ASC;`,
 };
 
 // --- sunucu ----------------------------------------------------------------
@@ -300,6 +394,41 @@ const ARAC_TANIMLARI = [
     name: "deadlock",
     description:
       "system_health'ten son deadlock'larin zamanlari (rolling buffer). 'Deadlock oluyor mu, ne zaman?' icin; detayli grafik SSMS'te. Salt-okunur.",
+  },
+  {
+    name: "pahali_sorgular",
+    description:
+      "En cok kaynak yiyen sorgular: ortalama CPU, sure, okuma, calisma sayisi ve sorgu metni (plan cache'ten). 'Hangi sorgu sunucuyu yoruyor?' icin. Salt-okunur.",
+  },
+  {
+    name: "index_sagligi",
+    description:
+      "Bagli oldugunuz veritabaninda KULLANILMAYAN index'ler: hic okunmuyor ama yazmada maliyet cikariyor. Silme adayi. Salt-okunur.",
+  },
+  {
+    name: "eksik_index_create",
+    description:
+      "Eksik index onerilerini etkiye gore HAZIR 'CREATE INDEX' cumleleriyle verir; kopyala-calistir. Salt-okunur (olusturmaz, metni uretir).",
+  },
+  {
+    name: "konfig_denetimi",
+    description:
+      "Sunucu ayarlarinin best-practice denetimi: MAXDOP, cost threshold, max memory, ad hoc workloads, backup compression — her biri icin oneriyle. Salt-okunur.",
+  },
+  {
+    name: "bellek_baskisi",
+    description:
+      "Bellek baskisi gostergeleri: Page Life Expectancy, bekleyen bellek talebi (memory grants pending), toplam/bos RAM ve bellek durumu. Salt-okunur.",
+  },
+  {
+    name: "vlf_log_sagligi",
+    description:
+      "Her veritabaninin VLF sayisi (cok yuksek = log performans sorunu) ve log'un neden buyudugu (log_reuse_wait). Salt-okunur. (SQL 2016+)",
+  },
+  {
+    name: "acik_transactionlar",
+    description:
+      "Acik/uzun suren transaction'lar: oturum, sure, kullanilan log MB, uygulama. Log sismesinin ve blocking'in kok nedeni. Salt-okunur.",
   },
   {
     name: "surekli_izleme",

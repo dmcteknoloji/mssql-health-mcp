@@ -42,6 +42,17 @@ GO
 -- GO
 
 -------------------------------------------------------------------------------
+-- 4) (yedek_durumu araci icin) msdb okuma izni
+--    Bu olmadan yalniz yedek_durumu calismaz; diger araclar msdb'siz calisir.
+-------------------------------------------------------------------------------
+USE [msdb];
+GO
+IF DATABASE_PRINCIPAL_ID(N'mcp_readonly') IS NULL
+    CREATE USER [mcp_readonly] FOR LOGIN [mcp_readonly];
+ALTER ROLE [db_datareader] ADD MEMBER [mcp_readonly];
+GO
+
+-------------------------------------------------------------------------------
 -- DOGRULAMA (istege bagli): bu login ile baglanip asagidakini calistirin.
 -- Calismalı:   SELECT TOP 1 * FROM sys.dm_os_sys_info;
 -- Calismamali: CREATE TABLE dbo._test (x int);   -- izin reddi almalisiniz

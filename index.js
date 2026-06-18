@@ -185,6 +185,34 @@ const SORGULAR = {
         'XE_LIVE_TARGET_TVF','PWAIT_ALL_COMPONENTS_INITIALIZED','PREEMPTIVE_XE_GETTARGETSTATE'
       )
     ORDER BY wait_time_ms DESC;`,
+
+  log_kullanimi: `DBCC SQLPERF(LOGSPACE);`,
+
+  disk_dosya: `
+    SELECT
+      DB_NAME(mf.database_id) AS veritabani,
+      mf.name                 AS mantiksal_ad,
+      mf.type_desc            AS tur,
+      CONVERT(decimal(18,1), mf.size * 8.0 / 1024) AS dosya_mb,
+      vs.volume_mount_point   AS disk,
+      CONVERT(decimal(18,1), vs.available_bytes / 1048576.0) AS disk_bos_mb,
+      CONVERT(decimal(5,1), 100.0 * vs.available_bytes / NULLIF(vs.total_bytes, 0)) AS disk_bos_yuzde
+    FROM sys.master_files mf
+    CROSS APPLY sys.dm_os_volume_stats(mf.database_id, mf.file_id) vs
+    ORDER BY vs.available_bytes ASC;`,
+
+  yedek_durumu: `
+    SELECT
+      d.name                 AS veritabani,
+      d.recovery_model_desc  AS kurtarma_modeli,
+      MAX(CASE WHEN b.type = 'D' THEN b.backup_finish_date END) AS son_full,
+      MAX(CASE WHEN b.type = 'I' THEN b.backup_finish_date END) AS son_diff,
+      MAX(CASE WHEN b.type = 'L' THEN b.backup_finish_date END) AS son_log,
+      DATEDIFF(HOUR, MAX(CASE WHEN b.type = 'D' THEN b.backup_finish_date END), GETDATE()) AS full_kac_saat_once
+    FROM sys.databases d
+    LEFT JOIN msdb.dbo.backupset b ON b.database_name = d.name
+    GROUP BY d.name, d.recovery_model_desc
+    ORDER BY full_kac_saat_once DESC;`,
 };
 
 // --- sunucu ----------------------------------------------------------------
@@ -226,6 +254,21 @@ const ARAC_TANIMLARI = [
     name: "bekleme_istatistikleri",
     description:
       "SQL Server'in en cok NEREDE bekledigini gosterir (wait stats), benign/idle waitler haric, yuzdesiyle. 'Sunucu neyi bekliyor, darbogaz nerede?' icin. Salt-okunur.",
+  },
+  {
+    name: "log_kullanimi",
+    description:
+      "Veritabani basina transaction log boyutu ve kullanim yuzdesi. 'Log doluyor mu?' icin. Salt-okunur.",
+  },
+  {
+    name: "disk_dosya",
+    description:
+      "Veri/log dosyalarinin boyutu ve bulunduklari diskteki bos alan. 'Disk doluyor mu?' icin. Salt-okunur.",
+  },
+  {
+    name: "yedek_durumu",
+    description:
+      "Her veritabaninin son full/diff/log yedegi ve full yedegin kac saat once alindigi. 'Yedegim guncel mi?' icin. (msdb okuma izni gerekir, setup script'te.) Salt-okunur.",
   },
   {
     name: "surekli_izleme",

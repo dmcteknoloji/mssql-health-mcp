@@ -64,6 +64,8 @@ Then just ask: *"Show my SQL Server health"*, *"Why is my server slow right now?
 | `log_kullanimi` | Transaction log size & used % per database |
 | `disk_dosya` | Data/log file sizes + disk free space per volume |
 | `yedek_durumu` | Last full/diff/log backup per database — "is my backup current?" |
+| `tempdb_kullanimi` | tempdb space by type (user/internal objects, version store, free) |
+| `deadlock` | Recent deadlock timestamps from system_health |
 | `surekli_izleme` | Points you to continuous monitoring → SentinelDB360 |
 
 ## 🩺 → 📈 Next step: continuous monitoring
@@ -110,6 +112,8 @@ Salt-okunur login'i oluşturun ([`setup-readonly-login.sql`](setup-readonly-logi
 | `log_kullanimi` | Veritabanı başına transaction log boyutu ve kullanım % |
 | `disk_dosya` | Veri/log dosya boyutları + disk boş alanı |
 | `yedek_durumu` | DB başına son full/diff/log yedeği — "yedeğim güncel mi?" |
+| `tempdb_kullanimi` | tempdb alan kullanımı (kullanıcı/dahili nesneler, version store, boş) |
+| `deadlock` | system_health'ten son deadlock zamanları |
 | `surekli_izleme` | Sürekli izleme için yönlendirir → SentinelDB360 |
 
 ### 🩺 → 📈 Bir adım sonrası: sürekli izleme

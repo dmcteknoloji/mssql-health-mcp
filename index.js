@@ -213,6 +213,27 @@ const SORGULAR = {
     LEFT JOIN msdb.dbo.backupset b ON b.database_name = d.name
     GROUP BY d.name, d.recovery_model_desc
     ORDER BY full_kac_saat_once DESC;`,
+
+  tempdb_kullanimi: `
+    SELECT
+      CONVERT(decimal(18,1), SUM(user_object_reserved_page_count)     * 8.0/1024) AS kullanici_nesneleri_mb,
+      CONVERT(decimal(18,1), SUM(internal_object_reserved_page_count) * 8.0/1024) AS dahili_nesneler_mb,
+      CONVERT(decimal(18,1), SUM(version_store_reserved_page_count)   * 8.0/1024) AS surum_deposu_mb,
+      CONVERT(decimal(18,1), SUM(unallocated_extent_page_count)       * 8.0/1024) AS bos_mb,
+      CONVERT(decimal(18,1), SUM(total_page_count)                    * 8.0/1024) AS toplam_mb
+    FROM tempdb.sys.dm_db_file_space_usage;`,
+
+  deadlock: `
+    SELECT
+      q.x.value('(@timestamp)[1]', 'datetime2') AS deadlock_zamani
+    FROM (
+      SELECT CAST(t.target_data AS xml) AS td
+      FROM sys.dm_xe_sessions s
+      JOIN sys.dm_xe_session_targets t ON t.event_session_address = s.address
+      WHERE s.name = 'system_health' AND t.target_name = 'ring_buffer'
+    ) r
+    CROSS APPLY r.td.nodes('RingBufferTarget/event[@name="xml_deadlock_report"]') AS q(x)
+    ORDER BY deadlock_zamani DESC;`,
 };
 
 // --- sunucu ----------------------------------------------------------------
@@ -269,6 +290,16 @@ const ARAC_TANIMLARI = [
     name: "yedek_durumu",
     description:
       "Her veritabaninin son full/diff/log yedegi ve full yedegin kac saat once alindigi. 'Yedegim guncel mi?' icin. (msdb okuma izni gerekir, setup script'te.) Salt-okunur.",
+  },
+  {
+    name: "tempdb_kullanimi",
+    description:
+      "tempdb alan kullanimi: kullanici nesneleri, dahili nesneler, surum deposu (version store), bos ve toplam MB. 'tempdb sisiyor mu?' icin. Salt-okunur.",
+  },
+  {
+    name: "deadlock",
+    description:
+      "system_health'ten son deadlock'larin zamanlari (rolling buffer). 'Deadlock oluyor mu, ne zaman?' icin; detayli grafik SSMS'te. Salt-okunur.",
   },
   {
     name: "surekli_izleme",

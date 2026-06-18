@@ -1,5 +1,5 @@
 {
-  "name": "@caglarozenc/mssql-health-mcp",
+  "name": "@dmcteknoloji/mssql-health-mcp",
   "version": "1.0.0",
   "description": "Salt-okunur SQL Server saglik/teshis MCP sunucusu. MCP istemciniz canli SQL Server'inizi DMV'lerle teshis etsin — read-only by design.",
   "type": "module",

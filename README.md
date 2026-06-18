@@ -1,6 +1,6 @@
 # mssql-health-mcp
 
-[![npm](https://img.shields.io/npm/v/@caglarozenc/mssql-health-mcp)](https://www.npmjs.com/package/@caglarozenc/mssql-health-mcp)
+[![npm](https://img.shields.io/npm/v/@dmcteknoloji/mssql-health-mcp)](https://www.npmjs.com/package/@dmcteknoloji/mssql-health-mcp)
 [![license: MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 [![node >=18](https://img.shields.io/badge/node-%3E%3D18-green)](https://nodejs.org)
 
@@ -31,7 +31,7 @@ MCP destekleyen istemcilerin çoğu aynı `mcpServers` biçimini kullanır. İst
   "mcpServers": {
     "mssql-health": {
       "command": "npx",
-      "args": ["-y", "@caglarozenc/mssql-health-mcp"],
+      "args": ["-y", "@dmcteknoloji/mssql-health-mcp"],
       "env": {
         "MSSQL_CONNECTION_STRING": "Server=SUNUCUM,1433;Database=master;User Id=mcp_readonly;Password=***;Encrypt=true;TrustServerCertificate=true;ApplicationIntent=ReadOnly;"
       }
@@ -45,7 +45,7 @@ Komut satırından MCP ekleyen istemcilerde eşdeğeri:
 ```bash
 <istemci> mcp add mssql-health \
   -e MSSQL_CONNECTION_STRING="Server=SUNUCUM,1433;Database=master;User Id=mcp_readonly;Password=***;TrustServerCertificate=true" \
-  -- npx -y @caglarozenc/mssql-health-mcp
+  -- npx -y @dmcteknoloji/mssql-health-mcp
 ```
 
 ### Bağlantı (env)
@@ -72,7 +72,7 @@ Komut satırından MCP ekleyen istemcilerde eşdeğeri:
 
 ```bash
 MSSQL_CONNECTION_STRING="Server=...;User Id=mcp_readonly;Password=***;TrustServerCertificate=true" \
-  npx -y @modelcontextprotocol/inspector npx -y @caglarozenc/mssql-health-mcp
+  npx -y @modelcontextprotocol/inspector npx -y @dmcteknoloji/mssql-health-mcp
 ```
 
 ## Sınırlar / yol haritası (v1)

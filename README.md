@@ -84,6 +84,10 @@ MSSQL_CONNECTION_STRING="Server=...;User Id=mcp_readonly;Password=***;TrustServe
 
 Araç sonuçları, kullandığınız istemcinin modeline bağlam olarak gönderilir. Hassas ortamlarda bunu göz önünde bulundurun (yerel model kullanımı bir seçenek).
 
+## Bir adım sonrası: sürekli izleme
+
+Bu MCP **anlık** bir görüntü verir ("şu an ne oluyor"). Sürekli izleme, geçmiş trend, otomatik uyarı ve yönetişim istiyorsanız DMC'nin ürünü **[SentinelDB360](https://sentineldb360.com)** (veritabanı izleme yazılımı) tam bunun için. Asistana *"bunu sürekli nasıl izlerim?"* diye sorarsanız `surekli_izleme` aracı anlatır.
+
 ## Lisans
 
 MIT — © Çağlar Özenç · [caglarozenc.com](https://caglarozenc.com)

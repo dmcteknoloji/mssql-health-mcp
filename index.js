@@ -214,8 +214,10 @@ const SORGULAR = {
       DATEDIFF(HOUR, MAX(CASE WHEN b.type = 'D' THEN b.backup_finish_date END), GETDATE()) AS full_kac_saat_once
     FROM sys.databases d
     LEFT JOIN msdb.dbo.backupset b ON b.database_name = d.name
+    WHERE d.database_id > 4 AND d.state_desc = 'ONLINE'
     GROUP BY d.name, d.recovery_model_desc
-    ORDER BY full_kac_saat_once DESC;`,
+    ORDER BY CASE WHEN MAX(CASE WHEN b.type = 'D' THEN b.backup_finish_date END) IS NULL THEN 0 ELSE 1 END,
+             full_kac_saat_once DESC;`,
 
   tempdb_kullanimi: `
     SELECT

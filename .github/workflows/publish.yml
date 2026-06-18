@@ -1,0 +1,26 @@
+name: publish
+
+# npm Trusted Publishing (OIDC) — token YOK, 2FA YOK.
+# npmjs.com'da bu paket icin "Trusted Publisher" olarak su repo+workflow tanimlanmali.
+on:
+  workflow_dispatch:
+  release:
+    types: [published]
+
+permissions:
+  contents: read
+  id-token: write   # OIDC kimligi (trusted publishing icin sart)
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          registry-url: 'https://registry.npmjs.org'
+      - name: npm guncelle (OIDC destegi icin >=11.5)
+        run: npm install -g npm@latest
+      - name: Yayinla (OIDC ile, token'siz)
+        run: npm publish

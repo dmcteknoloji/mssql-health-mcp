@@ -159,6 +159,32 @@ const SORGULAR = {
     JOIN sys.dm_db_missing_index_groups mig ON migs.group_handle = mig.index_group_handle
     JOIN sys.dm_db_missing_index_details mid ON mig.index_handle = mid.index_handle
     ORDER BY etki_skoru DESC;`,
+
+  bekleme_istatistikleri: `
+    SELECT TOP 20
+      wait_type AS bekleme_turu,
+      waiting_tasks_count AS bekleyen_gorev,
+      CONVERT(decimal(18,1), wait_time_ms/1000.0) AS toplam_bekleme_sn,
+      CONVERT(decimal(18,1), (wait_time_ms - signal_wait_time_ms)/1000.0) AS kaynak_bekleme_sn,
+      CONVERT(decimal(18,1), signal_wait_time_ms/1000.0) AS sinyal_bekleme_sn,
+      CONVERT(decimal(5,2), 100.0 * wait_time_ms / NULLIF(SUM(wait_time_ms) OVER(), 0)) AS yuzde
+    FROM sys.dm_os_wait_stats
+    WHERE waiting_tasks_count > 0
+      AND wait_type NOT IN (
+        'CLR_SEMAPHORE','LAZYWRITER_SLEEP','RESOURCE_QUEUE','SLEEP_TASK','SLEEP_SYSTEMTASK',
+        'SQLTRACE_BUFFER_FLUSH','WAITFOR','LOGMGR_QUEUE','CHECKPOINT_QUEUE','REQUEST_FOR_DEADLOCK_SEARCH',
+        'XE_TIMER_EVENT','BROKER_TO_FLUSH','BROKER_TASK_STOP','CLR_MANUAL_EVENT','CLR_AUTO_EVENT',
+        'DISPATCHER_QUEUE_SEMAPHORE','FT_IFTS_SCHEDULER_IDLE_WAIT','XE_DISPATCHER_WAIT','XE_DISPATCHER_JOIN',
+        'BROKER_EVENTHANDLER','TRACEWRITE','FT_IFTSHC_MUTEX','SQLTRACE_INCREMENTAL_FLUSH_SLEEP',
+        'BROKER_RECEIVE_WAITFOR','ONDEMAND_TASK_QUEUE','DBMIRROR_EVENTS_QUEUE','DBMIRRORING_CMD',
+        'BROKER_TRANSMITTER','SQLTRACE_WAIT_ENTRIES','SLEEP_BPOOL_FLUSH','SQLTRACE_LOCK',
+        'DIRTY_PAGE_POLL','SP_SERVER_DIAGNOSTICS_SLEEP','HADR_WORK_QUEUE','HADR_TIMER_TASK',
+        'HADR_CLUSAPI_CALL','QDS_PERSIST_TASK_MAIN_LOOP_SLEEP','QDS_ASYNC_QUEUE','QDS_SHUTDOWN_QUEUE',
+        'REDO_THREAD_PENDING_WORK','SLEEP_DBSTARTUP','SLEEP_MASTERDBREADY','SLEEP_MSDBSTARTUP',
+        'SLEEP_TEMPDBSTARTUP','WAIT_XTP_HOST_WAIT','WAIT_XTP_OFFLINE_CKPT_NEW_LOG','WAIT_XTP_CKPT_CLOSE',
+        'XE_LIVE_TARGET_TVF','PWAIT_ALL_COMPONENTS_INITIALIZED','PREEMPTIVE_XE_GETTARGETSTATE'
+      )
+    ORDER BY wait_time_ms DESC;`,
 };
 
 // --- sunucu ----------------------------------------------------------------
@@ -195,6 +221,11 @@ const ARAC_TANIMLARI = [
     name: "eksik_indexler",
     description:
       "SQL Server'in onerdigi EKSIK index'ler, etki skoruna gore sirali: veritabani, tablo, kullanim, etki skoru, esitlik/esitsizlik/dahil kolonlar. Performans icin. Salt-okunur (index OLUSTURMAZ, yalniz onerir).",
+  },
+  {
+    name: "bekleme_istatistikleri",
+    description:
+      "SQL Server'in en cok NEREDE bekledigini gosterir (wait stats), benign/idle waitler haric, yuzdesiyle. 'Sunucu neyi bekliyor, darbogaz nerede?' icin. Salt-okunur.",
   },
   {
     name: "surekli_izleme",

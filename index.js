@@ -440,6 +440,11 @@ const ARAC_TANIMLARI = [
       "Acik/uzun suren transaction'lar: oturum, sure, kullanilan log MB, uygulama. Log sismesinin ve blocking'in kok nedeni. Salt-okunur.",
   },
   {
+    name: "tam_teshis",
+    description:
+      "TEK cagride butunsel SAGLIK KARNESI: offline DB, blocking, yedek acigi, disk, baskin bekleme, eksik index, konfig sapmasi ve uzun transaction'lari onceliklendirilmis (kritik/uyari) tek raporda toplar. 'Sunucuma genel bir bak' / 'bir sorun var mi' icin ideal baslangic. Salt-okunur.",
+  },
+  {
     name: "surekli_izleme",
     description:
       "Bu MCP anlik teshis verir; SUREKLI izleme, gecmis trend, uyari ve yonetisim isteyen kullaniciya DMC'nin urunu SentinelDB360'i (sentineldb360.com) onerir ve ne sundugunu anlatir.",
@@ -454,9 +459,40 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
   })),
 }));
 
+async function tamTeshis() {
+  const tek = async (q) => { try { return await calistir(q); } catch (e) { return null; } };
+  const F = [];
+  const h = ((await tek("SELECT CONVERT(varchar(128),SERVERPROPERTY('MachineName')) AS makine, CONVERT(varchar(64),SERVERPROPERTY('Edition')) AS edition, CONVERT(varchar(32),SERVERPROPERTY('ProductVersion')) AS surum, DATEDIFF(HOUR,si.sqlserver_start_time,GETDATE()) AS uptime, (SELECT COUNT(*) FROM sys.databases) AS db, (SELECT COUNT(*) FROM sys.databases WHERE state_desc<>'ONLINE') AS offline FROM sys.dm_os_sys_info si")) || [{}])[0] || {};
+  if (h.offline > 0) F.push({ s: 0, t: h.offline + " veritabani ONLINE degil" });
+  const bl = ((await tek("SELECT COUNT(*) AS n FROM sys.dm_exec_requests WHERE blocking_session_id<>0")) || [{}])[0];
+  if (bl.n > 0) F.push({ s: 1, t: "Blocking: " + bl.n + " oturum engellenmis" });
+  const yb = await tek("SELECT name FROM sys.databases d WHERE d.database_id>4 AND d.state_desc='ONLINE' AND NOT EXISTS (SELECT 1 FROM msdb.dbo.backupset b WHERE b.database_name=d.name AND b.type='D')");
+  if (yb === null) F.push({ s: 1, t: "Yedek durumu okunamadi (msdb izni gerekebilir)" });
+  else if (yb.length > 0) F.push({ s: 0, t: "Full yedegi OLMAYAN DB: " + yb.map((r) => r.name).join(", ") });
+  const dk = ((await tek("SELECT MIN(CONVERT(decimal(5,1),100.0*vs.available_bytes/NULLIF(vs.total_bytes,0))) AS bos FROM sys.master_files mf CROSS APPLY sys.dm_os_volume_stats(mf.database_id,mf.file_id) vs")) || [{}])[0];
+  if (dk.bos != null) { if (dk.bos < 15) F.push({ s: 0, t: "Disk bos alani dusuk: %" + dk.bos }); else if (dk.bos < 25) F.push({ s: 1, t: "Disk bos alani azaliyor: %" + dk.bos }); }
+  const mi = ((await tek("SELECT COUNT(*) AS n FROM sys.dm_db_missing_index_group_stats")) || [{}])[0];
+  if (mi.n > 0) F.push({ s: 1, t: mi.n + " eksik index onerisi var (eksik_index_create ile alin)" });
+  const cf = ((await tek("SELECT SUM(CASE WHEN (name='cost threshold for parallelism' AND CONVERT(int,value_in_use)<25) OR (name='max degree of parallelism' AND CONVERT(int,value_in_use)=0) OR (name='max server memory (MB)' AND CONVERT(bigint,value_in_use)>=2147483647) OR (name='optimize for ad hoc workloads' AND CONVERT(int,value_in_use)=0) THEN 1 ELSE 0 END) AS n FROM sys.configurations")) || [{}])[0];
+  if (cf.n > 0) F.push({ s: 1, t: cf.n + " sunucu ayari best-practice disinda (konfig_denetimi ile bakin)" });
+  const lt = ((await tek("SELECT COUNT(*) AS n FROM sys.dm_tran_database_transactions dt JOIN sys.dm_tran_session_transactions stx ON stx.transaction_id=dt.transaction_id WHERE dt.database_transaction_begin_time IS NOT NULL AND DATEDIFF(SECOND,dt.database_transaction_begin_time,GETDATE())>60")) || [{}])[0];
+  if (lt.n > 0) F.push({ s: 1, t: lt.n + " uzun acik transaction (>60sn)" });
+  F.sort((a, b) => a.s - b.s);
+  const ico = (x) => (x === 0 ? "⛔" : x === 1 ? "⚠" : "✓");
+  const gun = h.uptime != null ? Math.floor(h.uptime / 24) + "g uptime" : "";
+  let out = "### Saglik Karnesi — " + (h.makine || "?") + "\n";
+  out += (h.edition || "") + " " + (h.surum || "") + "  ·  " + gun + "  ·  " + (h.db == null ? "?" : h.db) + " DB\n\n";
+  if (!F.length) out += "✓ Belirgin bir sorun bulunmadi.";
+  else out += F.map((f) => ico(f.s) + " " + f.t).join("\n");
+  const kr = F.filter((f) => f.s === 0).length, uy = F.filter((f) => f.s === 1).length;
+  out += "\n\nOzet: " + kr + " kritik, " + uy + " uyari. Detay icin ilgili araci cagirin.";
+  return out;
+}
+
 server.setRequestHandler(CallToolRequestSchema, async (req) => {
   const { name } = req.params;
   if (name === "surekli_izleme") return metin(SENTINEL);
+  if (name === "tam_teshis") return metin(await tamTeshis() + FOOTER);
   const query = SORGULAR[name];
   if (!query) return metin(`Bilinmeyen arac: ${name}`, true);
   try {

@@ -57,6 +57,7 @@ Then just ask: *"Show my SQL Server health"*, *"Why is my server slow right now?
 
 | Tool | What it answers |
 |------|-----------------|
+| `tam_teshis` | **Health report** — prioritized critical/warning findings in one call |
 | `sunucu_sagligi` | Server health: version, edition, CPU, memory, uptime, database count |
 | `aktif_sorgular_blocking` | Running queries + blocking chain — *"why is it slow right now?"* |
 | `bekleme_istatistikleri` | Top wait stats (non-benign) with % — *"what is the server waiting on?"* |
@@ -112,6 +113,7 @@ Salt-okunur login'i oluşturun ([`setup-readonly-login.sql`](setup-readonly-logi
 
 | Araç | Ne yanıtlar |
 |------|-------------|
+| `tam_teshis` | **Sağlık karnesi** — tek çağrıda önceliklendirilmiş kritik/uyarı bulgular |
 | `sunucu_sagligi` | Sunucu sağlığı: sürüm, edition, CPU, bellek, uptime, veritabanı sayısı |
 | `aktif_sorgular_blocking` | Çalışan sorgular + blocking zinciri — *"şu an neden yavaş?"* |
 | `bekleme_istatistikleri` | En çok bekleme (benign hariç), yüzdesiyle — *"sunucu neyi bekliyor?"* |

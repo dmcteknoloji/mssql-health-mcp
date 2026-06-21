@@ -1,7 +1,7 @@
 name: publish
 
 # npm Trusted Publishing (OIDC) — token YOK, 2FA YOK.
-# npmjs.com'da bu paket icin "Trusted Publisher" olarak su repo+workflow tanimlanmali.
+# registry-url KULLANILMIYOR: setup-node placeholder token yazip OIDC'yi engellemesin.
 on:
   workflow_dispatch:
   release:
@@ -9,7 +9,7 @@ on:
 
 permissions:
   contents: read
-  id-token: write   # OIDC kimligi (trusted publishing icin sart)
+  id-token: write
 
 jobs:
   publish:
@@ -19,8 +19,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-          registry-url: 'https://registry.npmjs.org'
       - name: npm guncelle (OIDC destegi icin >=11.5)
         run: npm install -g npm@latest
       - name: Yayinla (OIDC ile, token'siz)
-        run: npm publish
+        run: npm publish --access public

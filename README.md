@@ -7,7 +7,6 @@
 </p>
 
 <p align="center">
-  <a href="https://www.npmjs.com/package/@dmcteknoloji/mssql-health-mcp"><img src="https://img.shields.io/npm/v/@dmcteknoloji/mssql-health-mcp" alt="npm"/></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue" alt="MIT"/></a>
   <img src="https://img.shields.io/badge/node-%3E%3D18-green" alt="node >=18"/>
   <img src="https://img.shields.io/badge/SQL%20Server-read--only-2ec5ff" alt="read-only"/>
@@ -42,7 +41,7 @@ Create the read-only login ([`setup-readonly-login.sql`](setup-readonly-login.sq
   "mcpServers": {
     "mssql-health": {
       "command": "npx",
-      "args": ["-y", "@dmcteknoloji/mssql-health-mcp"],
+      "args": ["-y", "github:dmcteknoloji/mssql-health-mcp"],
       "env": {
         "MSSQL_CONNECTION_STRING": "Server=YOURSERVER,1433;Database=master;User Id=mcp_readonly;Password=***;Encrypt=true;TrustServerCertificate=true;ApplicationIntent=ReadOnly;"
       }
@@ -50,6 +49,8 @@ Create the read-only login ([`setup-readonly-login.sql`](setup-readonly-login.sq
   }
 }
 ```
+
+> Needs Node.js 18+ and git (installs straight from GitHub; not published to npm). No git? Download the repo ZIP and run it with `node index.js`.
 
 Then just ask: *"Show my SQL Server health"*, *"Why is my server slow right now?"*, *"Which indexes are missing?"*
 

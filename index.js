@@ -273,8 +273,8 @@ const SORGULAR = {
       DB_NAME(mid.database_id) AS veritabani,
       CONVERT(decimal(18,1), migs.avg_total_user_cost * migs.avg_user_impact *
         (migs.user_seeks + migs.user_scans)) AS etki,
-      'CREATE INDEX IX_' + OBJECT_NAME(mid.object_id, mid.database_id) + '_'
-        + CONVERT(varchar(20), mig.index_group_handle) + ' ON ' + mid.statement
+      'CREATE INDEX ' + QUOTENAME(LEFT('IX_' + ISNULL(OBJECT_NAME(mid.object_id, mid.database_id), 'obj') + '_'
+        + CONVERT(varchar(20), mig.index_group_handle), 128)) + ' ON ' + mid.statement
         + ' (' + ISNULL(mid.equality_columns, '')
         + CASE WHEN mid.equality_columns IS NOT NULL AND mid.inequality_columns IS NOT NULL THEN ',' ELSE '' END
         + ISNULL(mid.inequality_columns, '') + ')'
@@ -417,7 +417,7 @@ const ARAC_TANIMLARI = [
   {
     name: "eksik_index_create",
     description:
-      "Eksik index onerilerini etkiye gore HAZIR 'CREATE INDEX' cumleleriyle verir; kopyala-calistir. Salt-okunur (olusturmaz, metni uretir).",
+      "Eksik index onerilerini etkiye gore 'CREATE INDEX' cumleleriyle verir. Cumleler bir ONERIDIR: uygulamadan once gozden gecirin ve once test ortaminda deneyin. Arac yalniz metin uretir, hicbir sey olusturmaz.",
   },
   {
     name: "konfig_denetimi",

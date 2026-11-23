@@ -55,6 +55,16 @@ GRANT SELECT ON OBJECT::dbo.backupset TO [mcp_readonly];   -- yedek_durumu icin 
 GO
 
 -------------------------------------------------------------------------------
+-- 5) (istege bagli, index_sagligi tum veritabanlarini gezsin istiyorsaniz)
+--    CONNECT ANY DATABASE yalniz baglanma hakkidir, veri okuma yetkisi vermez.
+--    Verilmezse index_sagligi login'in erisemedigi veritabanlarini atlar ve
+--    kac veritabaninin taranmadigini cikti notunda yazar.
+-------------------------------------------------------------------------------
+-- USE [master];
+-- GRANT CONNECT ANY DATABASE TO [mcp_readonly];
+-- GO
+
+-------------------------------------------------------------------------------
 -- DOGRULAMA (istege bagli): bu login ile baglanip asagidakini calistirin.
 -- Calismalı:   SELECT TOP 1 * FROM sys.dm_os_sys_info;
 -- Calismamali: CREATE TABLE dbo._test (x int);   -- izin reddi almalisiniz

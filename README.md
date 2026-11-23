@@ -25,12 +25,12 @@ live blocking chains, top waits, missing indexes — straight from your instance
 
 ## 🔒 Read-only by design
 
-This is the whole point — safe enough to hand to a customer:
+Built so that the tools themselves cannot change anything:
 
 - **No write tools.** Only DMV/SELECT diagnostics. `INSERT/UPDATE/DELETE`, `DROP/ALTER`, "run any SQL" **don't exist** in the tool surface. Structurally cannot change anything.
 - **Least privilege.** Connect with a read-only login (`VIEW SERVER STATE`). Ready script: [`setup-readonly-login.sql`](setup-readonly-login.sql). Two layers: the tools can't write *and* the login can't write.
-- **Local & private.** Runs on your machine; your connection string and data never reach a third-party server.
-- **Timeouts + ReadOnly intent** so even a heavy diagnostic won't hurt production.
+- **Runs locally, but tool output goes to your AI client.** The MCP server runs on your machine and sends nothing to a server of ours. Its tool results are returned to your AI client, and therefore to the LLM provider you use. That output can include SQL text (which may contain literal values such as names, e-mail addresses or amounts) and database, login, host and application names. Check your organization's data policy first and prefer an enterprise-grade LLM account.
+- **Timeouts and a small connection pool** limit the load a diagnostic adds. This is not a guarantee: the diagnostics still read DMVs, so run them outside peak hours on busy systems. `ApplicationIntent=ReadOnly` only routes to a readable secondary and does not block writes. The real protection is the read-only login.
 
 ## 🚀 Quick start
 
@@ -70,7 +70,7 @@ Then just ask: *"Show my SQL Server health"*, *"Why is my server slow right now?
 | `deadlock` | Recent deadlock timestamps from system_health |
 | `pahali_sorgular` | Top queries by CPU/reads/duration + query text |
 | `index_sagligi` | Unused indexes (write cost, never read) |
-| `eksik_index_create` | Missing indexes as ready CREATE INDEX statements |
+| `eksik_index_create` | Missing index suggestions as CREATE INDEX statements (review them and try in a test environment first) |
 | `konfig_denetimi` | Server config best-practice audit (MAXDOP, memory…) |
 | `bellek_baskisi` | Memory pressure: PLE, pending grants, free RAM |
 | `vlf_log_sagligi` | VLF count + why the log can't truncate |
@@ -99,12 +99,12 @@ ChatGPT log dosyasının *nasıl* küçültüleceğini bilir, ama **sizin** sunu
 
 ### 🔒 Tasarımı gereği salt-okunur
 
-Müşteriye güvenle teslim edilecek kadar güvenli:
+Araçların kendisi hiçbir şeyi değiştiremeyecek biçimde tasarlandı:
 
 - **Yazma aracı yok.** Yalnızca DMV/SELECT teşhis araçları. `INSERT/UPDATE/DELETE`, `DROP/ALTER`, "rastgele sorgu çalıştır" araç yüzeyinde **yoktur** — yapısal olarak hiçbir şey değiştiremez.
 - **En az ayrıcalık.** Salt-okunur login ile bağlanın (`VIEW SERVER STATE`). Hazır script: [`setup-readonly-login.sql`](setup-readonly-login.sql). İki kat koruma: araç da yazamaz, login de yazamaz.
-- **Lokal & gizli.** Sizin makinenizde çalışır; bağlantı dizeniz ve verileriniz üçüncü bir sunucuya gitmez.
-- **Zaman aşımı + ReadOnly intent** — ağır bir teşhis bile production'ı yormaz.
+- **Lokal çalışır, ama araç çıktısı yapay zeka istemcinize gider.** MCP sunucusu sizin makinenizde çalışır ve bize hiçbir şey göndermez. Araç sonuçları yapay zeka istemcinize, dolayısıyla kullandığınız LLM sağlayıcısına iletilir. Bu çıktı SQL metnini (içinde isim, e-posta, tutar gibi sabit değerler olabilir) ve veritabanı, login, makine ve uygulama adlarını içerebilir. Önce kurumunuzun veri politikasına bakın, kurumsal bir LLM hesabı tercih edin.
+- **Zaman aşımı ve küçük bağlantı havuzu** bir teşhisin ekleyeceği yükü sınırlar. Bu bir garanti değildir, teşhisler yine DMV okur, yoğun sistemlerde yoğun saatlerin dışında çalıştırın. `ApplicationIntent=ReadOnly` yalnızca okunabilir ikincil kopyaya yönlendirir, yazmayı engellemez. Asıl koruma salt-okunur login'dir.
 
 ### 🚀 Hızlı başlangıç
 
@@ -126,7 +126,7 @@ Salt-okunur login'i oluşturun ([`setup-readonly-login.sql`](setup-readonly-logi
 | `deadlock` | system_health'ten son deadlock zamanları |
 | `pahali_sorgular` | En çok CPU/okuma/süre yiyen sorgular + metin |
 | `index_sagligi` | Kullanılmayan index'ler (yazma maliyeti, okunmuyor) |
-| `eksik_index_create` | Eksik index'ler hazır CREATE INDEX cümlesiyle |
+| `eksik_index_create` | Eksik index önerileri CREATE INDEX cümlesi olarak (gözden geçirin, önce test ortamında deneyin) |
 | `konfig_denetimi` | Sunucu konfig best-practice denetimi (MAXDOP, bellek…) |
 | `bellek_baskisi` | Bellek baskısı: PLE, bekleyen talep, boş RAM |
 | `vlf_log_sagligi` | VLF sayısı + log neden truncate olmuyor |
